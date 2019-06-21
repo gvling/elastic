@@ -1,0 +1,76 @@
+version: '3.5'
+services:
+  elasticsearch01:
+    build: ./elasticsearch
+    container_name: elasticsearch01
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata01:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+    ports:
+      - 9201:9200
+    networks:
+      - esnet
+
+  elasticsearch02:
+    build: ./elasticsearch
+    container_name: elasticsearch02
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata02:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+    ports:
+      - 9202:9200
+    networks:
+      - esnet
+
+  elasticsearch03:
+    build: ./elasticsearch
+    container_name: elasticsearch03
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata03:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+    ports:
+      - 9203:9200
+    networks:
+      - esnet
+
+  kibana01:
+    build: ./kibana
+    container_name: kibana01
+    links:
+      - elasticsearch01:elasticsearch
+    ports:
+      - 5601:5601
+    networks:
+      - esnet
+
+volumes:
+  esdata01:
+    driver: local
+  esdata02:
+    driver: local
+  esdata03:
+    driver: local
+
+networks:
+  esnet:
