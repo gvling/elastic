@@ -1,76 +1,67 @@
-version: '3.5'
+version: '2.2'
+
 services:
-  elasticsearch01:
-    build: ./elasticsearch
-    container_name: elasticsearch01
+  es01:
+    container_name: es01
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
     environment:
+      - cluster.name=docker-cluster
+      - node.name=es01
+      - discovery.seed_hosts=es02
+      - cluster.initial_master_nodes=es01,es02
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$ELASTICSEACHT_CERTS_DIR/es01/es01.key
+      - xpack.security.http.ssl.certificate_authorities=$ELASTICSEACHT_CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$ELASTICSEACHT_CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.certificate_authorities=$ELASTICSEACHT_CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$ELASTICSEACHT_CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.key=$ELASTICSEACHT_CERTS_DIR/es01/es01.key
+      - "http_proxy=${http_proxy}"
+      - "https_proxy=${http_proxy}"
+      - "no_proxy=es01, es02, localhost, 127.*, 192.*"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - esdata01:/usr/share/elasticsearch/data
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+    volumes: ['esdata1:/usr/share/elasticsearch/data', './certs:$ELASTICSEACHT_CERTS_DIR']
     ports:
-      - 9201:9200
-    networks:
-      - esnet
-
-  elasticsearch02:
-    build: ./elasticsearch
-    container_name: elasticsearch02
+      - 9200:9200
+  es02:
+    container_name: es02
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
     environment:
+      - cluster.name=docker-cluster
+      - node.name=es02
+      - discovery.seed_hosts=es01
+      - cluster.initial_master_nodes=es01,es02
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$ELASTICSEACHT_CERTS_DIR/es02/es02.key
+      - xpack.security.http.ssl.certificate_authorities=$ELASTICSEACHT_CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$ELASTICSEACHT_CERTS_DIR/es02/es02.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.certificate_authorities=$ELASTICSEACHT_CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$ELASTICSEACHT_CERTS_DIR/es02/es02.crt
+      - xpack.security.transport.ssl.key=$ELASTICSEACHT_CERTS_DIR/es02/es02.key
+      - "http_proxy=${http_proxy}"
+      - "https_proxy=${http_proxy}"
+      - "no_proxy=es01, es02, localhost, 127.*, 192.*"
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - esdata02:/usr/share/elasticsearch/data
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
-    ports:
-      - 9202:9200
-    networks:
-      - esnet
+    volumes: ['esdata2:/usr/share/elasticsearch/data', './certs:$ELASTICSEACHT_CERTS_DIR']
 
-  elasticsearch03:
-    build: ./elasticsearch
-    container_name: elasticsearch03
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.2.0
+    container_name: kibana
     environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - esdata03:/usr/share/elasticsearch/data
-      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+      HTTP_PROXY: "${http_proxy}"
+      HTTPS_PROXY: "${http_proxy}"
+      NO_PROXY: "es01, es02, localhost, 127.*, 192.*"
+      KIBANA_PASSWORD: "${KIBANA_PASSWORD}"
     ports:
-      - 9203:9200
-    networks:
-      - esnet
+      - 8080:5601
+    volumes: ['.:/usr/share/kibana/config']
 
-  kibana01:
-    build: ./kibana
-    container_name: kibana01
-    links:
-      - elasticsearch01:elasticsearch
-    ports:
-      - 5601:5601
-    networks:
-      - esnet
-
-volumes:
-  esdata01:
-    driver: local
-  esdata02:
-    driver: local
-  esdata03:
-    driver: local
-
-networks:
-  esnet:
+volumes: {"esdata1": {"driver": "local"}, "esdata2": {"driver": "local"}}

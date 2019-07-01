@@ -1,0 +1,24 @@
+version: '2.2'
+
+services:
+  create_certs:
+    container_name: create_certs
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
+    environment:
+      - "http_proxy=${http_proxy}"
+      - "https_proxy=${http_proxy}"
+    command: >
+      bash -c '
+        yum install -y unzip;
+        if [[ ! -d config/certificates/certs ]]; then
+          mkdir config/certificates/certs;
+        fi;
+        if [[ ! -f /local/certs/bundle.zip ]]; then
+          bin/elasticsearch-certgen --silent --in config/certificates/instances.yml --out config/certificates/certs/bundle.zip;
+          unzip -o config/certificates/certs/bundle.zip -d config/certificates/certs;
+        fi;
+        chgrp -R 0 config/certificates/certs;
+        echo "Success!"
+      '
+    working_dir: /usr/share/elasticsearch
+    volumes: ['.:/usr/share/elasticsearch/config/certificates']
